@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  db:
+    image: mariadb:10.5.27
+    container_name: maria-db
+#    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: refresh
+    volumes:
+      - db_data:/var/lib/maria
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: refresh-token
+    ports:
+      - "8080:8080"
+    environment:
+      spring.datasource.url: jdbc:mariadb://db:3306/refresh?useSSL=false&allowPublicKeyRetrieval=true
+      spring.datasource.username: root
+      spring.datasource.password: root
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
